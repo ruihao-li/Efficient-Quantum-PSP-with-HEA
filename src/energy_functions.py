@@ -1,10 +1,7 @@
 """
-The Folding problem
+Energy function computations based on coarse-grained Miyazawa-Jernigan potentials.
 """
 
-import sys
-
-sys.path.append("../")
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
 
@@ -37,6 +34,7 @@ def get_energy_matrix(
             pair_energies[i, j] = int_energy_matrix[min(aa_i, aa_j), max(aa_i, aa_j)]
     pair_energies *= pair_energy_multiplier
     return pair_energies
+
 
 def calculate_bitstring_energy_folding(
     conf_bitstring: str,
@@ -126,9 +124,8 @@ def calculate_bitstring_energy_folding(
     return round(overlap_penalty_energy + interaction_energy, 6)
 
 
-def load_energy_matrix_file(file_name):
+def load_energy_matrix_file(file_name: str) -> tuple[np.ndarray, list[str]]:
     """Returns the energy matrix from the Miyazawa-Jernigan potential file."""
-
     path = _construct_resource_path(file_name)
     matrix = np.loadtxt(fname=path, dtype=str)
     energy_matrix = _parse_energy_matrix(matrix)
@@ -136,7 +133,8 @@ def load_energy_matrix_file(file_name):
     return energy_matrix, symbols
 
 
-def _construct_resource_path(file_name):
+def _construct_resource_path(file_name: str) -> str:
+    """Constructs the path to the resource file."""
     path = os.path.realpath(
         os.path.join(
             os.path.dirname(__file__),
@@ -146,7 +144,7 @@ def _construct_resource_path(file_name):
     return os.path.normpath(path)
 
 
-def _parse_energy_matrix(matrix):
+def _parse_energy_matrix(matrix: np.ndarray) -> np.ndarray:
     """Parses a matrix loaded from the Miyazawa-Jernigan potential file."""
     energy_matrix = np.zeros((np.shape(matrix)[0], np.shape(matrix)[1]))
     for row in range(1, np.shape(matrix)[0]):

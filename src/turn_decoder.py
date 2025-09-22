@@ -1,15 +1,5 @@
 """
-Decoder
-
-Input:
-Take bitstring
-Lattice structure: Tetrahedral, face-centered cubic (FCC), body-centered cubic
-(BCC).
-
-Out:
-XYZ-file
-
-TODO: add the lattice structures
+Decoder module for converting configuration bitstrings to turn sequences and vice versa. Lattice types supported include tetrahedral, FCC, and BCC.
 """
 
 import numpy as np
@@ -20,7 +10,7 @@ def bitstring_to_coords(conf_bitstring: str, lattice: str, encoding: str) -> np.
     Convert a conformation bitstring to the Cartesian coordinates of the protein
     shape.
 
-    Input:
+    Args:
         conf_bitstring (str): The turn sequence represented by binary numbers.
         lattice (str): The lattice structure ("tetrahedral", "fcc", or "bcc").
         encoding (str): The encoding of the bitstring. Unary or binary. Note
@@ -113,17 +103,17 @@ def bitstring_to_coords(conf_bitstring: str, lattice: str, encoding: str) -> np.
 
 
 # TETRAHEDRAL
-def tetrahedral_turns_to_bitstring(turns: list, encoding: str) -> list[int]:
+def tetrahedral_turns_to_bitstring(turns: list, encoding: str) -> str:
     """
     Converts a list of integers representing the turns on a FCC lattice
     to a bitstring.
 
-    Input:
+    Args:
         turns (list): A list of integers representing the turns.
         encoding (str): The encoding of the bitstring. Unary or binary.
 
     Returns:
-        list: A list of integers representing the turns.
+        str: The bitstring representing the turns.
     """
     try:
         turns = [int(turn) for turn in turns]
@@ -152,7 +142,7 @@ def tetrahedral_bitstring_to_turns(bitstring: str, encoding: str) -> list[int]:
     0: (1, 1, 1)   1: (-1, -1, 1)   2: (1, -1, -1)   3: (-1, 1, -1)
     -0: (-1, -1, -1)   -1: (1, 1, -1)   -2: (-1, 1, 1)   -3: (1, -1, 1)
 
-    Input:
+    Args:
         bitstring (str): The bitstring to be converted.
         encoding (str): The encoding of the bitstring. Unary or binary.
 
@@ -195,17 +185,17 @@ def tetrahedral_bitstring_to_turns(bitstring: str, encoding: str) -> list[int]:
 
 
 # FCC
-def fcc_turns_to_bitstring(turns: list, encoding: str) -> list[int]:
+def fcc_turns_to_bitstring(turns: list, encoding: str) -> str:
     """
     Converts a list of integers representing the turns on a FCC lattice
     to a bitstring.
 
-    Input:
+    Args:
         turns (list): A list of integers representing the turns.
         encoding (str): The encoding of the bitstring. Unary or binary.
 
     Returns:
-        list: A list of integers representing the turns.
+        str: The bitstring representing the turns.
     """
     # if turns is a list then eval it to get the list of integers
     try:
@@ -247,7 +237,7 @@ def fcc_bitstring_to_turns(bitstring: str, encoding: str) -> list[int]:
     4: (0, 1, 1)   5: (0, 1, -1)   6: (0, 1, -1)   7: (0, -1, 1)
     8: (1, 0, 1)   9: (-1, 0, -1)   10: (1, 0, -1)   11: (-1, 0, 1)
 
-    Input:
+    Args:
         bitstring (str): The bitstring to be converted.
         encoding (str): The encoding of the bitstring. Unary or binary.
 
@@ -289,17 +279,17 @@ def fcc_bitstring_to_turns(bitstring: str, encoding: str) -> list[int]:
 
 
 # BCC
-def bcc_turns_to_bitstring(turns: list, encoding: str) -> list[int]:
+def bcc_turns_to_bitstring(turns: list, encoding: str) -> str:
     """
     Converts a list of integers representing the turns on a BCC lattice
     to a bitstring.
 
-    Input:
+    Args:
         turns (list): A list of integers representing the turns.
         encoding (str): The encoding of the bitstring. Unary or binary.
 
     Returns:
-        list: A list of integers representing the turns.
+        str: The bitstring representing the turns.
     """
     # if turns is a list then eval it to get the list of integers
     try:
@@ -336,7 +326,7 @@ def bcc_bitstring_to_turns(bitstring: str, encoding: str) -> list[int]:
     0: (1, 1, -1)   1: (1, -1, -1)   2: (-1, 1, -1)   3: (-1, -1, -1)
     4: (1, 1, 1)   5: (1, -1, 1)   6: (-1, 1, 1)   7: (-1, -1, 1)
 
-    Input:
+    Args:
         bitstring (str): The bitstring to be converted.
         encoding (str): The encoding of the bitstring. Unary or binary.
 
@@ -373,7 +363,7 @@ def read_xyz(file_path: str, lattice: str) -> tuple[list[int], str]:
     """
     Reads an .xyz file and returns the turns as integers and the amino acid sequence.
 
-    Input:
+    Args:
         file_path (str): Path to the .xyz file.
         lattice (str): The lattice structure ("fcc" or "tetrahedral").
 
@@ -425,8 +415,27 @@ def read_xyz(file_path: str, lattice: str) -> tuple[list[int], str]:
             * (1.0 / np.sqrt(3))
             * np.array([[-1, 1, 1], [1, 1, -1], [-1, -1, -1], [1, -1, 1]])
         )
+    elif lattice == "bcc":
+        coordinates = (
+            3.8
+            * (1.0 / np.sqrt(3))
+            * np.array(
+                [
+                    [1, 1, -1],
+                    [1, -1, -1],
+                    [-1, 1, -1],
+                    [-1, -1, -1],
+                    [1, 1, 1],
+                    [1, -1, 1],
+                    [-1, 1, 1],
+                    [-1, -1, 1],
+                ]
+            )
+        )
     else:
-        raise ValueError("Invalid lattice structure. Choose 'fcc' or 'tetrahedral'.")
+        raise ValueError(
+            "Invalid lattice structure. Choose 'fcc', 'tetrahedral', or 'bcc'."
+        )
 
     # Calculate the relative vectors (differences between consecutive coordinates)
     relative_vectors = np.diff(coords, axis=0)
@@ -448,13 +457,3 @@ def read_xyz(file_path: str, lattice: str) -> tuple[list[int], str]:
         turn_seq.append(turn_index)
 
     return turn_seq, sequence
-
-
-def cubic_bitstring_to_turns():
-    pass
-
-
-# conf_bitstring = "01000110010"
-# lattice = "bcc"
-# encoding = "binary"
-# print(bitstring_to_coords(conf_bitstring, lattice, encoding))

@@ -1,9 +1,20 @@
-from turn_decoder import read_xyz, bitstring_to_coords
+"""
+Module for loading and managing protein datasets.
+"""
+
 import os
-import numpy as np
 
 
-def read_file(filename):
+def read_file(filename: str) -> str | None:
+    """
+    Read the contents of a file.
+
+    Args:
+        filename (str): Path to the file to be read.
+
+    Returns:
+        Optional[str]: File contents as string if successful, None if file not found.
+    """
     try:
         with open(filename, "r") as f:
             return f.read()
@@ -18,10 +29,20 @@ def load_dataset(
     matrix_year: str = "1996",
     directory: str = "classical_search/res/",
     size_of_set: None | int = None,
-):
+) -> dict[str, "ProteinData"]:
     """
-    Input:
-    matrix_year = '1985' or '1996' or '2003'
+    Load protein dataset from classical search results.
+
+    Args:
+        lattice (str): Type of lattice structure ("tetrahedral", "fcc", or "bcc").
+        encoding (str): Encoding method for protein conformations.
+        nearestneighbor (int, optional): Order of nearest neighbor interactions. Defaults to 1.
+        matrix_year (str, optional): Year of interaction matrix ("1985", "1996", or "2003"). Defaults to "1996".
+        directory (str, optional): Base directory for data files. Defaults to "classical_search/res/".
+        size_of_set (None | int): Maximum number of proteins to load. Defaults to None.
+
+    Returns:
+        dict[str, ProteinData]: Dictionary mapping protein names to ProteinData objects.
     """
     # directory = directory + lattice + "/"
 
@@ -41,16 +62,6 @@ def load_dataset(
             protein_dict[resname] = protein
 
             # 1. Read the data
-            # if lattice == "fcc":
-            #     filenames = [f"{directory}{resname}/topobj.txt"]
-            # elif lattice == "tetrahedral":
-            #     filenames = [
-            #         f"{directory}{resname}/{matrix_year}_energies/topobj.txt",
-            #         f"{directory}{resname}/{str(int(matrix_year)-3)}_energies/topobj.txt",
-            #         f"{directory}{resname}/{matrix_year}_matrix/topobj.txt",
-            #         f"{directory}{resname}/{str(int(matrix_year)-3)}_matrix/topobj.txt",
-            #         f"{directory}{resname}/topobj.txt",
-            #     ]
             filenames = [f"{directory}{resname}/topobj.txt"]
 
             data = None
@@ -58,6 +69,9 @@ def load_dataset(
                 data = read_file(filename)
                 if data is not None:
                     break
+
+            if data is None:
+                continue  # Skip this protein if no data file found
 
             # 2. Split by line
             data_by_line = data.split("\n")
@@ -130,19 +144,17 @@ def load_dataset(
 def relabel_fcc_turns(turns: str) -> list[int]:
     """
     Convert the turns used in the classical exhaustive search to the turns used
-    in the quantum encoding.
-    0 to 0
-    1 to 2
-    2 to 4
-    3 to 6
-    4 to 8
-    5 to 10
-    6 to 1
-    7 to 3
-    8 to 5
-    9 to 7
-    a to 9
-    b to 11
+    in the quantum encoding for FCC lattice.
+
+    Mapping:
+    0 to 0, 1 to 2, 2 to 4, 3 to 6, 4 to 8, 5 to 10,
+    6 to 1, 7 to 3, 8 to 5, 9 to 7, a to 9, b to 11
+
+    Args:
+        turns (str): String of turn characters from classical search.
+
+    Returns:
+        list[int]: List of integer turn values for quantum encoding.
     """
     return_list = []
     for turn in turns:
@@ -176,15 +188,16 @@ def relabel_fcc_turns(turns: str) -> list[int]:
 def relabel_bcc_turns(turns: str) -> list[int]:
     """
     Convert the turns used in the classical exhaustive search to the turns used
-    in the quantum encoding.
-    0 to 0
-    1 to 1
-    2 to 2
-    3 to 3
-    4 to 7
-    5 to 6
-    6 to 5
-    7 to 4
+    in the quantum encoding for BCC lattice.
+
+    Mapping:
+    0 to 0, 1 to 1, 2 to 2, 3 to 3, 4 to 7, 5 to 6, 6 to 5, 7 to 4
+
+    Args:
+        turns (str): String of turn characters from classical search.
+
+    Returns:
+        list[int]: List of integer turn values for quantum encoding.
     """
     return_list = []
     for turn in turns:
@@ -208,7 +221,15 @@ def relabel_bcc_turns(turns: str) -> list[int]:
 
 
 class ProteinData:
-    def __init__(self, resname, lattice, encoding):
+    def __init__(self, resname: str, lattice: str, encoding: str):
+        """
+        Initialize a ProteinData object.
+
+        Args:
+            resname (str): Name of the protein residue.
+            lattice (str): Type of lattice.
+            encoding (str): Encoding method, "binary" or "unary".
+        """
         self.resname = resname
         self.sequence = ""
         self.lattice = lattice
@@ -245,17 +266,36 @@ class ProteinData:
             + "\n"
         )
 
-    def add_to_sequence(self, aa):
+    def add_to_sequence(self, aa: str) -> None:
+        """
+        Add an amino acid to the protein sequence.
+
+        Args:
+            aa (str): Single amino acid character to add.
+        """
         self.sequence += aa
 
-    def add_number_of_aa(self, number_of_aa):
+    def add_number_of_aa(self, number_of_aa: int) -> None:
+        """
+        Set the number of amino acids in the protein.
+
+        Args:
+            number_of_aa (int): Number of amino acids.
+        """
         self.number_of_aa = number_of_aa
 
     def add_folding(
         self,
-        energy,
-        turn_list,
-    ):
+        energy: float,
+        turn_list: list[int],
+    ) -> None:
+        """
+        Add a protein folding conformation with its energy.
+
+        Args:
+            energy (float): Energy of the conformation.
+            turn_list (List[int]): List of turn integers representing the conformation.
+        """
         if str(turn_list) in self.folding_dict:
             self.folding_dict[str(turn_list)] = round(float(energy), 6)
             """
@@ -266,14 +306,29 @@ class ProteinData:
         else:
             self.folding_dict[str(turn_list)] = round(float(energy), 6)
 
-    def add_nn(self, nn):
+    def add_nn(self, nn: int) -> None:
+        """
+        Set the number of nearest neighbors.
+
+        Args:
+            nn (int): Number of nearest neighbors.
+        """
         self.nn = nn
 
-    def add_bit_txt(self, bit_txt):
+    def add_bit_txt(self, bit_txt: str) -> None:
+        """
+        Add bitstring text data (only if not already set).
+
+        Args:
+            bit_txt (str): Bitstring text representation.
+        """
         if self.bit_txt == None:
             self.bit_txt = bit_txt
 
-    def add_ground_state(self):
+    def add_ground_state(self) -> None:
+        """
+        Find and set the ground state conformation with lowest energy.
+        """
         exec("from turn_decoder import " + self.lattice + "_turns_to_bitstring")
         # go through the folding_dict and find the lowest energy
         # and the corresponding bitstring

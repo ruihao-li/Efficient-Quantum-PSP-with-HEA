@@ -1,3 +1,7 @@
+"""
+Module for classical post-processing and training of quantum circuits for protein folding.
+"""
+
 import time
 import numpy as np
 
@@ -61,7 +65,7 @@ class ProteinSolver:
         num_batches: int | None = None,
         save: bool = True,
         verbose: bool = False,
-        #train: bool = True,
+        # train: bool = True,
     ) -> float:
         """
         Compute the cost for a given set of parameters of the ansatz.
@@ -123,8 +127,8 @@ class ProteinSolver:
         self,
         params: np.ndarray,
         num_batches: int | None = None,
-        #train: bool = True,
-    ) -> float:
+        # train: bool = True,
+    ) -> list[tuple[float, float]]:
         """
         Compute the cost for a given set of parameters of the ansatz.
 
@@ -156,13 +160,13 @@ class ProteinSolver:
         )
         return prob_energy_pairs
 
-
     def train(
         self,
         init_params: np.ndarray,
         optimizer: str,
         maxiter: int,
         num_batches: int | None = None,
+        save: bool = True,
         verbose: bool = False,
     ) -> tuple[np.ndarray, float]:
         """
@@ -184,7 +188,7 @@ class ProteinSolver:
             self.qc_cost_function,
             init_params,
             method=optimizer,
-            args=(num_batches, verbose),
+            args=(num_batches, save, verbose),
             options={"maxiter": maxiter, "disp": True},
         )
         return optimizer_result.x, optimizer_result.fun
@@ -284,7 +288,7 @@ class ProteinSolver:
 def calculate_batch_energy(
     conf_bitstring_list: list[str],
     energy_function: callable,
-    energy_args: tuple,
+    energy_args: dict,
 ) -> list[float]:
     """
     Calculate the energy of a batch of bitstrings.
@@ -292,7 +296,7 @@ def calculate_batch_energy(
     Args:
         conf_bitstring_list (list[str]): List of conformation bitstrings.
         energy_function (callable): The energy function.
-        energy_args (tuple): The arguments of the energy function.
+        energy_args (dict): The arguments of the energy function.
 
     Returns:
         list[float]: List of energies of the batch of bitstrings.
@@ -305,7 +309,7 @@ def calculate_batch_energy(
 def process_counts(
     counts: Counts | dict[str, int],
     energy_function: callable,
-    energy_args: tuple,
+    energy_args: dict,
     num_batches: int | None = None,
     global_bitstring_energies: dict[str, float] = {},
 ) -> tuple[dict[str, float], list[tuple[float, float]]]:
@@ -319,7 +323,7 @@ def process_counts(
     Args:
         counts (Counts): The counts of a quantum circuit run.
         energy_function (callable): The energy function.
-        energy_args (tuple): The arguments of the energy function.
+        energy_args (dict): The arguments of the energy function.
         num_batches (int, optional): The number of batches to split the unique
         states into. Defaults to None.
         global_bitstring_energies (dict[str, float], optional): The global
@@ -352,7 +356,9 @@ def process_counts(
         )
         return {}, prob_energy_pairs
 
-    if num_batches is None or num_batches > psutil.cpu_count():
+    if num_batches is None:
+        num_batches = psutil.cpu_count()
+    elif num_batches > psutil.cpu_count():
         num_batches = psutil.cpu_count()
     if num_batches > num_unique_states:
         num_batches = num_unique_states

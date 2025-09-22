@@ -1,21 +1,29 @@
-import matplotlib.pyplot as plt
+import sys
+
+sys.path.append("src/")
 import numpy as np
 from qiskit_aer.primitives import SamplerV2 as Sampler
 from qiskit.circuit.library import EfficientSU2, RealAmplitudes
 from train_qc import ProteinSolver
-from utils import plot_cost, save_constants_to_file, save_text_to_file, count_gates
+from utils import save_constants_to_file, save_text_to_file
 from energy_functions import calculate_bitstring_energy_folding, get_energy_matrix
-from cost_functions import cvar, average_cost
+from cost_functions import cvar
 from dataset_class import load_dataset
 import ray
 import psutil
 import pickle
 import json
+
 NUM_WORKERS = psutil.cpu_count()  # Use all available CPUs
 ray.init(
     num_cpus=NUM_WORKERS,
     ignore_reinit_error=True,
     log_to_driver=False,
+    runtime_env={
+        "py_modules": ["src"],
+        "working_dir": ".",
+        "env_vars": {"PYTHONPATH": "./src"},
+    },
 )
 import time
 import os
@@ -26,12 +34,12 @@ current_file_directory = os.path.dirname(os.path.abspath(__file__))
 
 # Constants
 start_index = 0  # Index starting from 0
-end_index = 2
-maxiter = 5
-average_iter = 10
+end_index = 1  # Controls how many proteins to run
+maxiter = 50  # Max iterations for optimizer
+average_iter = 5  # Number of times to run the optimization for each protein
 verbose = True
 num_layers = 1
-lattice = "bcc"
+lattice = "tetrahedral"  # "tetrahedral", "bcc", or "fcc"
 default_shots = 100_000
 encoding = "binary"
 matrix_year = "1996"  # 1985
@@ -104,10 +112,7 @@ now_testing = (
     + "_"
     + ansatz_name
 )
-timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-save_file_at = (
-    current_file_directory + "/results/" + now_testing + "/" + timestamp + "/"
-)
+save_file_at = current_file_directory + "/results/" + now_testing + "/"
 
 # Ensure the directory exists
 os.makedirs(os.path.dirname(save_file_at), exist_ok=True)

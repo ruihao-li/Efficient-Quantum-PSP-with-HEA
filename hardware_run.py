@@ -1,13 +1,13 @@
-import numpy as np
+import sys
 
+sys.path.append("src/")
 from qiskit_aer import AerSimulator
 from qiskit.circuit.library import RealAmplitudes
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
-from qiskit_ibm_runtime import QiskitRuntimeService, Session, Batch
+from qiskit_ibm_runtime import QiskitRuntimeService, Session
 from qiskit_ibm_runtime.fake_provider import FakeSherbrooke
 from qiskit_ibm_runtime import SamplerV2 as Sampler
 from dataset_class import load_dataset
-from dataset_class import ProteinData
 from utils import load_constants_from_file, get_filenames_os
 from datetime import datetime, timezone
 import os
@@ -16,15 +16,9 @@ import json
 
 # Path to save the results
 current_file_directory = os.path.dirname(os.path.abspath(__file__))
-# Set up Qiskit Runtime
-service = QiskitRuntimeService(
-    token="<token>",
-    channel="ibm_quantum_platform",
-    instance="<crn>",
-)
 
 TIMESTAMP = datetime.now(timezone.utc)
-TEST = False
+TEST = True
 
 if TEST:
     lattice_list = ["tetrahedral"]
@@ -37,6 +31,12 @@ if TEST:
     backend = AerSimulator(method="matrix_product_state")
 
 else:
+    # Set up Qiskit Runtime
+    service = QiskitRuntimeService(
+        token="<token>",
+        channel="ibm_quantum_platform",
+        instance="<crn>",
+    )
     lattice_list = ["tetrahedral", "fcc", "bcc"]
     # lattice_list = ["tetrahedral"]
     nearest_neighbors_list = [1, 2]
@@ -203,9 +203,10 @@ for i, dir_name in enumerate(full_dataset.keys()):
             routing_method="none",
         )
         tp_qc = pm.run(qc)
-        print(
-            f"Transpiled circuit qubit layout: {tp_qc.layout.final_index_layout(filter_ancillas=True)}"
-        )
+        if not TEST:
+            print(
+                f"Transpiled circuit qubit layout: {tp_qc.layout.final_index_layout(filter_ancillas=True)}"
+            )
         pub = (tp_qc, best_params)
         circ_name = lattice + "_" + str(nearest_neighbors) + "nn_" + sequence
         # Add the circuit to the circuits dictionary

@@ -47,7 +47,7 @@ def save_constants_to_file(file_path: str, constants_dict: dict) -> None:
     f.close()
 
 
-def load_constants_from_file(file_path: str) -> str:
+def load_constants_from_file(file_path: str) -> dict:
     return_dict = {}
     with open(file_path, "r") as f:
         lines = f.readlines()
@@ -78,15 +78,6 @@ def save_text_to_file(file_path: str, text: str) -> None:
     with open(file_path, "w") as f:
         f.write(text)
     f.close()
-
-
-def count_gates(circuit):
-    counts = defaultdict()
-    counts[1] = 0
-    counts[2] = 0
-    for inst in circuit.data:
-        counts[inst.operation.num_qubits] += 1
-    return counts
 
 
 def get_filenames_os(directory_path):
