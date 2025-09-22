@@ -18,7 +18,7 @@ import json
 current_file_directory = os.path.dirname(os.path.abspath(__file__))
 
 TIMESTAMP = datetime.now(timezone.utc)
-TEST = True
+TEST = False  # Set to True for local testing with AerSimulator
 
 if TEST:
     lattice_list = ["tetrahedral"]
