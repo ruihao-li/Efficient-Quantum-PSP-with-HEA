@@ -6,7 +6,7 @@
 
 Hamiltonian-free quantum protein structure prediction workflow leveraging problem-agnostic ansatzes, such as a hardware-efficient ansatz (HEA).
 
-Link to the paper: [Efficient Quantum Protein Structure Prediction with Problem-Agnostic Ansatzes]()
+Link to the paper: [Efficient Quantum Protein Structure Prediction with Problem-Agnostic Ansatzes](https://doi.org/10.48550/arXiv.2509.18263)
 
 ## 🏗️ Code Structure
 
